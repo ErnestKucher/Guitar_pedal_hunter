@@ -1,0 +1,7 @@
+pedals_list = ["Dunlop Fuzz Face mini", 
+               "Analogman Sun face", 
+               "Vox v486wh", 
+               "MXR Octavio", 
+               "MXR M68 Uni-Vibe", 
+               "Orange Fur coat"
+               ]
