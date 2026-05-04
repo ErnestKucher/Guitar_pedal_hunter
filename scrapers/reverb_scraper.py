@@ -10,6 +10,8 @@ with open("D:\\Programming\\pedal-hunter\\config\\query_text_sold.graphql", "r",
 
 def scrape_reverb(search_query, max_pages=None):
 
+    all_listings = []
+
     url = "https://gql.reverb.com/graphql"
 
     session = requests.Session()
@@ -46,8 +48,6 @@ def scrape_reverb(search_query, max_pages=None):
     # 🔹 pirmas request – sužinom total
     response = session.post(url, json=payload)
 
-    print("STATUS:", response.status_code)
-
     if response.status_code != 200:
         print(response.text)
         return
@@ -68,13 +68,8 @@ def scrape_reverb(search_query, max_pages=None):
     if max_pages:
         total_pages = min(total_pages, max_pages)
 
-    print(f"TOTAL LISTINGS: {total}")
-    print(f"TOTAL PAGES: {total_pages}")
-
     # 🔁 loop per puslapius
     for page in range(1, total_pages + 1):
-
-        print(f"\n--- PAGE {page} ---\n")
 
         payload["variables"]["input"]["page"] = page
 
@@ -105,40 +100,45 @@ def scrape_reverb(search_query, max_pages=None):
 
         for item in listings:
             title = item.get("title", "N/A")
-            slug = item.get("slug", "")
-            listing_id = item.get("id", "")
             price = (
                 item.get("pricing", {})
                     .get("buyerPrice", {})
-                    .get("display", "N/A")
+                    .get("amount")
             )
             condition = (
                 item.get("condition", {})
                     .get("displayName", "N/A")
             )
-            shipping = "N/A"
+            shipping = None
 
             for shipping_price in item.get("shipping", {}).get("shippingPrices", []):
                 rate = shipping_price.get("rate")
-                if rate and rate.get("display"):
-                    shipping = rate["display"]
+                if rate and rate.get("amount"):
+                    shipping = rate.get("amount")
                     break
 
             listing_id = item.get("_id", "").replace("id:", "")
             slug = item.get("slug")
             url_item = f"https://reverb.com/item/{listing_id}-{slug}"
 
-            print(f"Title: {title}")
-            print(f"Price: {price}")
-            print(f"Condition: {condition}")
-            print(f"Shipping: {shipping}")
-            print(f"URL: {url_item}")
-            print("-----------")
-
+            listing = {
+                "title": title,
+                "price": price,
+                "condition": condition,
+                "shipping": shipping,
+                "url": url_item
+                }
+            
+            all_listings.append(listing)
+        
         # 💤 anti-ban
         time.sleep(2)
 
+    return all_listings
+
 def get_sold_prices(search_query):
+
+    sold_listings = []
 
     url = "https://gql.reverb.com/graphql"
 
@@ -171,6 +171,7 @@ def get_sold_prices(search_query):
         "query": query_text_sold
     }
 
+    # 🔥 1st request (kad gaut total)
     response = session.post(url, json=payload)
 
     print("STATUS:", response.status_code)
@@ -181,34 +182,63 @@ def get_sold_prices(search_query):
         print("ERROR:", data)
         return
 
-    listings = data["data"]["marketplaceListingsSearch"]["listings"]
+    results = data["data"]["marketplaceListingsSearch"]
 
-    for item in listings:
-        title = item.get("title")
-        price = (
-            item.get("pricing", {})
-                .get("buyerPrice", {})
-                .get("display")
+    total = results["pagination"]["total"]
+    page_size = payload["variables"]["input"]["pageSize"]
+    total_pages = math.ceil(total / page_size)
+
+    # 🔁 paging loop
+    for page in range(1, total_pages + 1):
+
+        payload["variables"]["input"]["page"] = page
+        payload["variables"]["input"]["currentSearchParams"] = (
+            f"query={encoded_query}&page={page}&product_type=effects-and-pedals&show_only_sold=true"
         )
-        condition = (
+
+        response = session.post(url, json=payload)
+
+        if response.status_code != 200:
+            print(f"❌ Failed page {page}")
+            continue
+
+        data = response.json()
+
+        if "data" not in data:
+            print(f"❌ Bad data page {page}")
+            continue
+
+        listings = data["data"]["marketplaceListingsSearch"]["listings"]
+
+        for item in listings:
+            title = item.get("title")
+            price = (
+                item.get("pricing", {})
+                    .get("buyerPrice", {})
+                    .get("amount")
+            )
+            condition = (
                 item.get("condition", {})
                     .get("displayName", "N/A")
             )
-        shipping = "N/A"
+            shipping = None
 
-        for shipping_price in item.get("shipping", {}).get("shippingPrices", []):
-            rate = shipping_price.get("rate")
-            if rate and rate.get("display"):
-                shipping = rate["display"]
-                break
+            for shipping_price in item.get("shipping", {}).get("shippingPrices", []):
+                rate = shipping_price.get("rate")
+                if rate and rate.get("amount"):
+                    shipping = rate.get("amount")
+                    break
 
-        print(f"Title: {title}")
-        print(f"Sold: {price}")
-        print(f"Condition: {condition}")
-        print(f"Shipping: {shipping}")
-        print("-----------")
+            sold_listings.append({
+                "title": title,
+                "price": price,
+                "condition": condition,
+                "shipping": shipping
+            })
 
-    time.sleep(2)
+        time.sleep(2)
+
+    return sold_listings
 
 
     
