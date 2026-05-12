@@ -1,6 +1,8 @@
 from scrapers.reverb_scraper import scrape_reverb, get_sold_prices
 import statistics
 import sys
+from utils.storage import load_seen, save_seen
+from datetime import date
 
 if __name__ == "__main__":
     query = " ".join(sys.argv[1:])
@@ -23,6 +25,7 @@ if __name__ == "__main__":
     
     results = deduplicate(results)
     sold_results = deduplicate(sold_results)
+    seen_deals = load_seen()
 
     sold_prices = [l["total_price"] for l in sold_results if l["total_price"] is not None]
     if not sold_prices:
@@ -38,10 +41,24 @@ if __name__ == "__main__":
         key=lambda x: x["total_price"]
     )
 
-    if below_median:
+    new_deals = []
+    for l in below_median:
+        if l["id"] not in seen_deals:
+            new_deals.append(l)
+            seen_deals[l["id"]] = {
+                "title": l["title"],
+                "price": l["total_price"],
+                "url": l["url"],
+                "condition": l["condition"],
+                "found_at": str(date.today())
+            }
+    save_seen(seen_deals)
+    print(f"New deals found: {len(new_deals)}")
+
+    if new_deals:
         print(f"\n🔥 Deals below median ({round(median_price, 2)} EUR):\n")
 
-        for index, l in enumerate(below_median[:5], start=1):
+        for index, l in enumerate(new_deals[:5], start=1):
             diff = median_price - l["total_price"]
             percent = (diff / median_price) * 100
             print("=" * 50)
@@ -51,4 +68,4 @@ if __name__ == "__main__":
             print(f"📦 Condition:     {l['condition']}")
             print(f"🔗 {l['url']}")
     else:
-        print("✅ No undervalued listings found")
+        print("✅ No NEW undervalued listings found")
