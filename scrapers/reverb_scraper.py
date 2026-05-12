@@ -3,6 +3,7 @@ import math
 import time
 import random
 from urllib.parse import quote_plus
+from config.configurations import EXCLUDED_TITLE_KEYWORDS
 
 with open("D:\\Programming\\pedal-hunter\\config\\query_text_active.graphql", "r", encoding="utf-8") as f:
     query_text_active = f.read()
@@ -50,13 +51,39 @@ def fetch(session, url, payload, max_retries=3):
     print("[ERROR] Max retries reached. Giving up.")
     return None
 
+def to_float(value):
+    try:
+        if value is None:
+            return None
+        return float(value)
+    except (ValueError, TypeError):
+        return None
+    
+def deduplicate(listings):
+    unique = {}
+    for l in listings:
+        if l.get("id"):
+            unique[l["id"]] = l
+    return list(unique.values())
+
+def is_valid_listing(listing):
+    title = listing["title"].lower()
+
+    for keyword in EXCLUDED_TITLE_KEYWORDS:
+        if keyword in title:
+            return False
+
+    return True
+
 def parse_listing(item):
     title = item.get("title", "N/A")
-    price = (
+    raw_price = (
         item.get("pricing", {})
             .get("buyerPrice", {})
             .get("amount")
     )
+    price = to_float(raw_price)
+
     condition = (
         item.get("condition", {})
             .get("displayName", "N/A")
@@ -66,22 +93,29 @@ def parse_listing(item):
     for shipping_price in item.get("shipping", {}).get("shippingPrices", []):
         rate = shipping_price.get("rate")
         if rate and rate.get("amount"):
-            shipping = rate.get("amount")
+            shipping = to_float(rate.get("amount"))
             break
 
     raw_id = item.get("_id", "")
     if not raw_id:
-        print("NO ID:", item)
+        print("[WARN] Missing ID in listing")
     listing_id = raw_id.replace("id:", "") if raw_id else None
     slug = item.get("slug","")
     url_item = f"https://reverb.com/item/{listing_id}-{slug}"
 
+    if price is not None and shipping is not None:
+        total_price = price + shipping
+    else:
+        total_price = None
+
     return {
         "title": title,
+        "id": listing_id,
         "price": price,
         "condition": condition,
         "shipping": shipping,
-        "url": url_item
+        "url": url_item,
+        "total_price": total_price
     }
 
 def scrape_reverb(search_query, max_pages=None):
@@ -157,12 +191,14 @@ def scrape_reverb(search_query, max_pages=None):
             continue
 
         for item in listings:
-            all_listings.append(parse_listing(item))
-        
+            listing = parse_listing(item)
+            if is_valid_listing(listing):
+                all_listings.append(listing)
+
         # 💤 anti-ban
         time.sleep(random.uniform(1.5, 3.5))
 
-    return all_listings
+    return deduplicate(all_listings)
 
 def get_sold_prices(search_query):
 
@@ -229,7 +265,7 @@ def get_sold_prices(search_query):
 
         time.sleep(random.uniform(1.5, 3.5))
 
-    return sold_listings
+    return deduplicate(sold_listings)
 
 
     

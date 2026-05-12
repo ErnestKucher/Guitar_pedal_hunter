@@ -5,3 +5,13 @@ pedals_list = ["Dunlop Fuzz Face mini",
                "MXR M68 Uni-Vibe", 
                "Orange Fur coat"
                ]
+
+EXCLUDED_TITLE_KEYWORDS = {
+    "power supply",
+    "adapter",
+    "footswitch",
+    "pcb",
+    "replacement",
+    "cable",
+    "knob",
+}
