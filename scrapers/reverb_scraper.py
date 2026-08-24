@@ -4,11 +4,14 @@ import time
 import random
 from urllib.parse import quote_plus
 from config.configurations import EXCLUDED_TITLE_KEYWORDS
+from pathlib import Path
 
-with open("D:\\Programming\\pedal-hunter\\config\\query_text_active.graphql", "r", encoding="utf-8") as f:
+CONFIG_DIR = Path(__file__).resolve().parent.parent / "config"
+
+with open(CONFIG_DIR / "query_text_active.graphql", "r", encoding="utf-8") as f:
     query_text_active = f.read()
-with open("D:\\Programming\\pedal-hunter\\config\\query_text_sold.graphql", "r", encoding="utf-8") as f:
-    query_text_sold = f.read()
+with open(CONFIG_DIR / "query_text_sold.graphql", "r", encoding="utf-8") as f:
+    query_text_sold = f.read().strip()
 
 def create_session():
     session = requests.Session()
@@ -118,7 +121,7 @@ def parse_listing(item):
         "total_price": total_price
     }
 
-def scrape_reverb(search_query, max_pages=None):
+def scrape_reverb(search_query, max_pages=None, session=None):
 
     all_listings = []
     url = "https://gql.reverb.com/graphql"
@@ -140,7 +143,8 @@ def scrape_reverb(search_query, max_pages=None):
     }
 
     # 🔹 pirmas request – sužinom total
-    session = create_session()
+    if session is None:
+        session = create_session()
     response = fetch(session, url, payload)
     if not response:
         print("Failed to fetch data")
@@ -200,7 +204,7 @@ def scrape_reverb(search_query, max_pages=None):
 
     return deduplicate(all_listings)
 
-def get_sold_prices(search_query):
+def get_sold_prices(search_query, session=None) :
 
     sold_listings = []
     url = "https://gql.reverb.com/graphql"
@@ -220,7 +224,8 @@ def get_sold_prices(search_query):
         "query": query_text_sold
     }
 
-    session = create_session()
+    if session is None:
+        session = create_session()
     response = fetch(session, url, payload)
     if not response:
         print("❌ Failed to fetch data")
@@ -229,7 +234,7 @@ def get_sold_prices(search_query):
 
     if "data" not in data:
         print("ERROR:", data)
-        return
+        return []
 
     results = data["data"]["marketplaceListingsSearch"]
 

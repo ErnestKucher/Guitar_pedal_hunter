@@ -1,4 +1,4 @@
-from scrapers.reverb_scraper import scrape_reverb, get_sold_prices
+from scrapers.reverb_scraper import scrape_reverb, get_sold_prices, create_session
 import statistics
 import sys
 from utils.storage import load_seen, save_seen
@@ -12,9 +12,10 @@ if __name__ == "__main__":
         sys.exit(1)
 
     print(f"Searching for: {query}")
-
-    results = scrape_reverb(query)
-    sold_results = get_sold_prices(query)
+    
+    session = create_session()
+    results = scrape_reverb(query, session=session)
+    sold_results = get_sold_prices(query, session=session)
 
     def deduplicate(listings):
         unique = {}
