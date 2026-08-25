@@ -28,17 +28,28 @@ if __name__ == "__main__":
     sold_results = deduplicate(sold_results)
     seen_deals = load_seen()
 
-    sold_prices = [l["total_price"] for l in sold_results if l["total_price"] is not None]
-    if not sold_prices:
+
+    sold_by_condition = {}
+    for l in sold_results:
+        if l["total_price"] is not None:
+            condition = l["condition"]
+            if condition not in sold_by_condition:
+                sold_by_condition[condition] = []
+            sold_by_condition[condition].append(l["total_price"])
+
+    if not sold_by_condition:
         print("No sold listings found. Cannot calculate median price.")
         sys.exit(1)
 
-    median_price = statistics.median(sold_prices)
+    median_by_condition = {condition: statistics.median(prices) for condition, prices in sold_by_condition.items()}
+
     print(f"Found {len(results)} active listings")
-    print(f"Median sold price: {round(median_price, 2)}")
+    print(f"Median sold price by condition:")
+    for condition, median_price in median_by_condition.items():
+        print(f"  {condition}: {round(median_price, 2)}")
 
     below_median = sorted(
-        [l for l in results if l["total_price"] is not None and l["total_price"] < median_price],
+        [l for l in results if l["condition"] in median_by_condition and l["total_price"] is not None and l["total_price"] < median_by_condition[l["condition"]]],
         key=lambda x: x["total_price"]
     )
 
@@ -57,11 +68,12 @@ if __name__ == "__main__":
     print(f"New deals found: {len(new_deals)}")
 
     if new_deals:
-        print(f"\n🔥 Deals below median ({round(median_price, 2)} EUR):\n")
+        print(f"\n🔥 Deals below median:\n")
 
         for index, l in enumerate(new_deals[:5], start=1):
-            diff = median_price - l["total_price"]
-            percent = (diff / median_price) * 100
+            condition_median = median_by_condition[l["condition"]]
+            diff = condition_median - l["total_price"]
+            percent = (diff / condition_median) * 100
             print("=" * 50)
             print(f"[{index}] {l['title']}")
             print(f"💰 Price:         {l['total_price']:.2f} EUR")
