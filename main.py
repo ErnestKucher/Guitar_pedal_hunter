@@ -12,10 +12,24 @@ if __name__ == "__main__":
         sys.exit(1)
 
     print(f"Searching for: {query}")
-    
-    session = create_session()
-    results = scrape_reverb(query, session=session)
-    sold_results = get_sold_prices(query, session=session)
+
+    try:
+        session = create_session()
+    except Exception as e:
+        print(f"Error occurred while creating session: {e}")
+        sys.exit(1)
+
+    try:
+        results = scrape_reverb(query, session=session)
+    except Exception as e:
+        print(f"Error occurred while scraping: {e}")
+        sys.exit(1)
+
+    try:
+        sold_results = get_sold_prices(query, session=session)
+    except Exception as e:
+        print(f"Error occurred while fetching sold prices: {e}")
+        sys.exit(1)
 
     def deduplicate(listings):
         unique = {}
@@ -23,6 +37,13 @@ if __name__ == "__main__":
             if l.get("id"):
                 unique[l["id"]] = l
         return list(unique.values())
+
+    def is_recent(found_at_str, max_age_days=30):
+        try:
+            found_at_date = date.fromisoformat(found_at_str)
+            return (date.today() - found_at_date).days <= max_age_days
+        except ValueError:
+            return False
     
     results = deduplicate(results)
     sold_results = deduplicate(sold_results)
@@ -64,6 +85,7 @@ if __name__ == "__main__":
                 "condition": l["condition"],
                 "found_at": str(date.today())
             }
+    seen_deals = {listing_id: entry for listing_id, entry in seen_deals.items() if is_recent(entry["found_at"])}
     save_seen(seen_deals)
     print(f"New deals found: {len(new_deals)}")
 

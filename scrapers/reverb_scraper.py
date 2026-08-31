@@ -70,7 +70,7 @@ def deduplicate(listings):
     return list(unique.values())
 
 def is_valid_listing(listing):
-    title = listing["title"].lower()
+    title = listing.get("title", "").lower()
 
     for keyword in EXCLUDED_TITLE_KEYWORDS:
         if keyword in title:
