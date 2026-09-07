@@ -4,8 +4,11 @@ import sys
 from utils.storage import load_seen, save_seen
 from datetime import date
 
+def normalize_query(query):
+        return query.lower().strip()
+
 if __name__ == "__main__":
-    query = " ".join(sys.argv[1:])
+    query = normalize_query(" ".join(sys.argv[1:]))
 
     if not query:
         print("Please provide a search query as a command-line argument.")
