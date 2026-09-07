@@ -1,4 +1,4 @@
-from utils.storage import load_seen
+from utils.database import load_seen
 
 seen_deals = load_seen()
 

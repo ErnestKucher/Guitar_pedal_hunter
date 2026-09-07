@@ -1,7 +1,7 @@
 from scrapers.reverb_scraper import scrape_reverb, get_sold_prices, create_session
 import statistics
 import sys
-from utils.storage import load_seen, save_seen
+import utils.database
 from datetime import date
 
 def normalize_query(query):
@@ -40,17 +40,30 @@ if __name__ == "__main__":
             if l.get("id"):
                 unique[l["id"]] = l
         return list(unique.values())
-
-    def is_recent(found_at_str, max_age_days=30):
-        try:
-            found_at_date = date.fromisoformat(found_at_str)
-            return (date.today() - found_at_date).days <= max_age_days
-        except ValueError:
-            return False
     
     results = deduplicate(results)
+    for l in results:
+        utils.database.save_price_history(
+            search_query=query,
+            listing_id=l["id"],
+            listing_title=l["title"],
+            listing_price=l["total_price"],
+            listing_condition=l["condition"],
+            listing_url=l["url"],
+            listing_type= "active"
+        )
     sold_results = deduplicate(sold_results)
-    seen_deals = load_seen()
+    for l in sold_results:
+        utils.database.save_price_history(
+            search_query=query,
+            listing_id=l["id"],
+            listing_title=l["title"],
+            listing_price=l["total_price"],
+            listing_condition=l["condition"],
+            listing_url=l["url"],
+            listing_type= "sold"
+        )
+    seen_deals = utils.database.load_seen()
 
 
     sold_by_condition = {}
@@ -81,15 +94,16 @@ if __name__ == "__main__":
     for l in below_median:
         if l["id"] not in seen_deals:
             new_deals.append(l)
-            seen_deals[l["id"]] = {
-                "title": l["title"],
-                "price": l["total_price"],
-                "url": l["url"],
-                "condition": l["condition"],
-                "found_at": str(date.today())
-            }
-    seen_deals = {listing_id: entry for listing_id, entry in seen_deals.items() if is_recent(entry["found_at"])}
-    save_seen(seen_deals)
+            utils.database.save_seen_deals(
+                listing_id=l["id"],
+                title=l["title"],
+                price=l["total_price"],
+                url=l["url"],
+                condition=l["condition"],
+                found_at=date.today().isoformat()
+            )
+
+    utils.database.prune_seen_deals(max_age_days=30)
     print(f"New deals found: {len(new_deals)}")
 
     if new_deals:
