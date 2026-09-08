@@ -7,6 +7,13 @@ from datetime import date
 def normalize_query(query):
         return query.lower().strip()
 
+def deduplicate(listings):
+    unique = {}
+    for l in listings:
+        if l.get("id"):
+            unique[l["id"]] = l
+    return list(unique.values())
+
 if __name__ == "__main__":
     query = normalize_query(" ".join(sys.argv[1:]))
 
@@ -33,13 +40,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Error occurred while fetching sold prices: {e}")
         sys.exit(1)
-
-    def deduplicate(listings):
-        unique = {}
-        for l in listings:
-            if l.get("id"):
-                unique[l["id"]] = l
-        return list(unique.values())
     
     results = deduplicate(results)
     for l in results:

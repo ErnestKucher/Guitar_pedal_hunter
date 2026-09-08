@@ -17,4 +17,8 @@ EXCLUDED_TITLE_KEYWORDS = {
     "transistors",
     "screws",
     "switch",
+    "kit",
+    "tread",
+    "replica",
+    "clone",
 }
