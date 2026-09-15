@@ -14,7 +14,7 @@ EXCLUDED_TITLE_KEYWORDS = {
     "replacement",
     "cable",
     "knob",
-    "transistors",
+    "transistor",
     "screws",
     "switch",
     "kit",

@@ -1,6 +1,4 @@
-from main import normalize_query
-from main import deduplicate
-from scrapers.reverb_scraper import is_valid_listing
+from core.deal_finder import normalize_query, deduplicate
 
 def test_normalize_query_lower_and_strip_combined():
     result = normalize_query("Fuzz Face")
