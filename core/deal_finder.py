@@ -2,6 +2,7 @@ import statistics
 from datetime import date
 from scrapers.reverb_scraper import scrape_reverb, get_sold_prices, create_session
 import utils.database
+from utils.telegram import send_telegram_message
 
 
 def normalize_query(query):
@@ -94,6 +95,21 @@ def find_deals(query, session=None):
             )
 
     utils.database.prune_seen_deals(max_age_days=30)
+
+    if new_deals:
+        message = f"🔥 New undervalued listings found for '{query}':\n\n"
+        for index, l in enumerate(new_deals[:5], start=1):
+            condition_median = median_by_condition[l["condition"]]
+            diff = condition_median - l["total_price"]
+            percent = (diff / condition_median) * 100
+            message += (
+                f"[{index}] {l['title']}\n"
+                f"💰 Price:         {l['total_price']:.2f} EUR\n"
+                f"📉 Below Median:  {diff:.2f} EUR ({percent:.1f}%)\n"
+                f"📦 Condition:     {l['condition']}\n"
+                f"🔗 {l['url']}\n\n"
+            )
+        send_telegram_message(message)
 
     return {
         "active_count": len(results),
