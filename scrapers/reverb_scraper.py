@@ -3,8 +3,8 @@ import math
 import time
 import random
 from urllib.parse import quote_plus
-from config.configurations import EXCLUDED_TITLE_KEYWORDS
 from pathlib import Path
+from utils.helpers import to_float, is_valid_listing
 
 CONFIG_DIR = Path(__file__).resolve().parent.parent / "config"
 
@@ -54,29 +54,12 @@ def fetch(session, url, payload, max_retries=3):
     print("[ERROR] Max retries reached. Giving up.")
     return None
 
-def to_float(value):
-    try:
-        if value is None:
-            return None
-        return float(value)
-    except (ValueError, TypeError):
-        return None
-    
 def deduplicate(listings):
     unique = {}
     for l in listings:
         if l.get("id"):
             unique[l["id"]] = l
     return list(unique.values())
-
-def is_valid_listing(listing):
-    title = listing.get("title", "").lower()
-
-    for keyword in EXCLUDED_TITLE_KEYWORDS:
-        if keyword in title:
-            return False
-
-    return True
 
 def parse_listing(item):
     title = item.get("title", "N/A")

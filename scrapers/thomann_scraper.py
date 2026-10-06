@@ -4,7 +4,6 @@ import time
 import random
 import json
 from urllib.parse import quote_plus
-
 from sqlalchemy import TIME
 
 STANDARD_SHIPPING_EUR = 9.90
@@ -111,5 +110,5 @@ def scrape_thomann(query):
     return {"listings": listings}
 
 if __name__ == "__main__":
-    result = scrape_thomann("/")
+    result = scrape_thomann("uni vibe")
     print(result)

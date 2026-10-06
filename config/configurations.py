@@ -21,4 +21,7 @@ EXCLUDED_TITLE_KEYWORDS = {
     "tread",
     "replica",
     "clone",
+    "netzteil",
+    "ladekabel",
+    "ladegerät",
 }

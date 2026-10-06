@@ -2,6 +2,7 @@ import requests
 import base64
 import os
 from dotenv import load_dotenv
+from utils.helpers import to_float, is_valid_listing
 
 load_dotenv()
 EBAY_PROD_CLIENT_ID = os.getenv("EBAY_PROD_CLIENT_ID")
@@ -33,26 +34,46 @@ def search_ebay(query, access_token):
         "X-EBAY-C-MARKETPLACE-ID": "EBAY_DE"
     }
     params = {
-        "q": query
+        "q": f' "{query}"'
     }
     response = requests.get(url, headers=headers, params=params)
     return response
 
-if __name__ == "__main__":
+def parse_ebay_item(item):
+    price = to_float(item.get("price", {}).get("value") if item.get("price") else None)
+    shipping_cost = to_float(item.get("shippingOptions", [{}])[0].get("shippingCost", {}).get("value") if item.get("shippingOptions") else None)
+    total_price = price + shipping_cost if price is not None and shipping_cost is not None else None
+
+    return {
+        "id": item.get("itemId"),
+        "title": item.get("title"),
+        "condition": item.get("condition"),
+        "price": price,
+        "shipping": shipping_cost,
+        "total_price": total_price,
+        "url": item.get("itemWebUrl")
+    }
+
+def scrape_ebay(query):
     token_response = get_ebay_token()
-    access_token = token_response.json()["access_token"]
-    
-    search_response = search_ebay("fuzz face", access_token)
-    print(search_response.status_code)
-    result = search_response.json()
-    print(f"Total results: {result.get('total')}")
-    
-    if "itemSummaries" in result:
-        for num, item in enumerate(result["itemSummaries"][:5]):
-            print(f"--------Item {num + 1}-------------:")
-            print("Title:", item.get("title"))
-            print("Condition:", item.get("condition"))
-            print("Price:", item.get("price").get("value"))
-            print("Shipping Cost:", item.get("shippingOptions")[0].get("shippingCost").get("value") if item.get("shippingOptions") else "N/A")
-            print("Total Price:", float(item.get("price").get("value")) + float(item.get("shippingOptions")[0].get("shippingCost").get("value")) if item.get("shippingOptions") else "N/A")
-            print("Item URL:", item.get("itemWebUrl"))
+    if token_response.status_code != 200:
+        return {"error": "Could not authenticate with eBay."}
+
+    access_token = token_response.json().get("access_token")
+    if not access_token:
+        return {"error": "Could not authenticate with eBay."}
+
+    search_response = search_ebay(query, access_token)
+    if search_response.status_code != 200:
+        return {"error": "eBay search failed."}
+
+    items = search_response.json().get("itemSummaries", [])
+    if not items:
+        return {"error": f"No information found for '{query}' on eBay."}
+
+    parsed = [parse_ebay_item(item) for item in items]
+    listings = [item for item in parsed if is_valid_listing(item)]
+    return {"listings": listings}
+
+if __name__ == "__main__":
+    print(scrape_ebay("uni vibe")["listings"][0])

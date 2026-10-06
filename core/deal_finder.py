@@ -3,6 +3,7 @@ from datetime import date
 from scrapers.reverb_scraper import scrape_reverb, get_sold_prices, create_session
 import utils.database
 from utils.telegram import send_telegram_message
+from scrapers.ebay_scraper import scrape_ebay
 
 
 def normalize_query(query):
