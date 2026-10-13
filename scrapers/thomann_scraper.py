@@ -1,10 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 import time
-import random
 import json
 from urllib.parse import quote_plus
-from sqlalchemy import TIME
 
 STANDARD_SHIPPING_EUR = 9.90
 
