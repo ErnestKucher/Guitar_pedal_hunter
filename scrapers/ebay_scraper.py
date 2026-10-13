@@ -51,7 +51,7 @@ def parse_ebay_item(item):
         "price": price,
         "shipping": shipping_cost,
         "total_price": total_price,
-        "url": item.get("itemWebUrl")
+        "url": (item.get("itemWebUrl") or "").split("?")[0]
     }
 
 def scrape_ebay(query):

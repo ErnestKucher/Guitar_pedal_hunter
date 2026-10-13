@@ -13,7 +13,7 @@ def send_telegram_message(text):
         "chat_id": TELEGRAM_CHAT_ID,
         "text": text
     }
-    response = requests.post(url, json=payload)
+    response = requests.post(url, json=payload, timeout=10)
     return response
 
 if __name__ == "__main__":

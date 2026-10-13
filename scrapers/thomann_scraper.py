@@ -82,7 +82,7 @@ def build_listings(data, urls_by_id):
         if url:
             listings.append({
                 "id": product_id,
-                "title": item["item_name"],
+                "title": f"{item.get('item_brand', '')} {item['item_name']}".strip(),
                 "price": item["price"],
                 "shipping": STANDARD_SHIPPING_EUR,
                 "total_price": item["price"] + STANDARD_SHIPPING_EUR,

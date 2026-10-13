@@ -16,3 +16,7 @@ def is_valid_listing(listing):
             return False
 
     return True
+
+def matches_query(title, query):
+    title = title.lower()
+    return all(word in title for word in query.lower().split())

@@ -25,7 +25,7 @@ against each other), and flags active listings priced below that median.
 - Telegram bot notifications
 - FastAPI endpoints (`/`, `/deals`, `/search?query=...`)
 - Shared business logic in `core/deal_finder.py`, used by both CLI and API
-- pytest suite (11 tests)
+- pytest suite (15 tests)
 
 ## How it works
 

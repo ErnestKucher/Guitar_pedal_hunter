@@ -41,3 +41,14 @@ def test_parse_ebay_item_missing_shipping():
     assert result["price"] == 150.0
     assert result["shipping"] is None
     assert result["total_price"] is None
+
+def test_parse_ebay_item_strips_tracking_from_url():
+    item = {
+        "itemId": "v1|123|0",
+        "title": "MXR Uni-Vibe",
+        "price": {"value": "150.00", "currency": "EUR"},
+        "shippingOptions": [{"shippingCost": {"value": "10.00", "currency": "EUR"}}],
+        "itemWebUrl": "https://www.ebay.de/itm/123?_skw=abc&hash=xyz"
+    }
+    result = parse_ebay_item(item)
+    assert result["url"] == "https://www.ebay.de/itm/123"
