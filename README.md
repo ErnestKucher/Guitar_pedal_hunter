@@ -61,6 +61,7 @@ cd Guitar_pedal_hunter
 python -m venv venv
 venv\Scripts\activate      # Windows
 pip install -r requirements.txt
+python -m utils.database
 ```
 
 Create a `.env` file (see `.env.example`):
