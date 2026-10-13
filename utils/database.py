@@ -69,3 +69,7 @@ def save_price_history(search_query, listing_id, listing_title, listing_price, l
             INSERT INTO price_history (search_query, listing_id, listing_title, listing_price, listing_condition, listing_url, listing_type, scraped_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """, (search_query, listing_id, listing_title, listing_price, listing_condition, listing_url, listing_type, scraped_at))
+
+if __name__ == "__main__":
+    create_tables()
+    print("Tables created successfully")
