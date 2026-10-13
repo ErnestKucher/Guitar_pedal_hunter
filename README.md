@@ -1,50 +1,57 @@
 # Pedal Hunter
 
-Automatically finds underpriced guitar pedal listings on Reverb.com by comparing 
-active listings to recent sold prices — grouped by condition, so you're never 
-comparing a mint pedal's price to a beat-up one's.
+Finds underpriced used guitar pedals on Reverb by comparing active listings
+with condition-specific sold-price medians, then sends the best deals to
+Telegram together with reference prices from eBay and Thomann.
 
 ## Why
 
-Manually browsing Reverb for a good deal means opening dozens of listings and 
-guessing whether a price is actually good, based on gut feeling. Pedal Hunter 
-automates that judgment call: it pulls real recent sold prices for the same 
-search, calculates a fair median price *per condition*, and flags active 
-listings priced meaningfully below that — so you only look at listings 
-actually worth your time.
+Checking whether a used pedal is a good deal means opening many listings and
+guessing. Pedal Hunter automates that: it pulls recent sold prices, computes a
+fair median per condition (a "Mint" and a "Good" pedal are never compared
+against each other), and flags active listings priced below that median.
+
+## Features
+
+- Reverb: active + sold listings via Reverb's GraphQL endpoint, with retries
+  and polite delays
+- Per-condition median sold prices; only listings below their own
+  condition's median are flagged
+- SQLite storage: `seen_deals` (no repeat notifications, auto-pruned after
+  30 days) and `price_history` (every scraped listing, active and sold,
+  timestamped, for trend analysis)
+- eBay: official Browse API with OAuth2 client-credentials flow
+- Thomann: search results parsed from the page's embedded `dataLayer` JSON
+- Telegram bot notifications
+- FastAPI endpoints (`/`, `/deals`, `/search?query=...`)
+- Shared business logic in `core/deal_finder.py`, used by both CLI and API
+- pytest suite (11 tests)
 
 ## How it works
 
-1. Queries Reverb's GraphQL API for active listings matching a search term
-2. Queries the same API for recently *sold* listings matching that search
-3. Groups sold prices by condition (Mint, Excellent, Good, etc.) and calculates 
-   a median price per condition — avoiding the mistake of blending prices 
-   across very different conditions
-4. Flags active listings priced below their condition's median, sorted by 
-   biggest discount
-5. Tracks previously-seen deals so you're only notified about new ones on 
-   repeat runs, and automatically prunes deals older than 30 days
+1. Scrape active and sold listings from Reverb, deduplicate
+2. Save everything to `price_history`
+3. Group sold prices by condition, compute medians
+4. Flag active listings below their condition's median
+5. Save new deals to `seen_deals`, prune old ones
+6. Fetch eBay and Thomann reference listings for the same query
+7. Send a Telegram summary
 
-## Example output
+## Example notification
 
-Searching for: univibe
-Found 93 active listings
-Median sold price by condition:
-Very Good: 181.75
-Excellent: 206.04
-Mint: 295.0
-Brand New: 140.5
-B-Stock: 418.66
-Good: 240.69
-New deals found: 3
+```
+***New undervalued listings found for 'mxr uni vibe' in Reverb***
 
-==================================================
-[1] MXR M68 Uni-Vibe Effect Pedal
-💰 Price: 115.98 EUR
-📉 Below Median: 124.71 EUR (51.8%)
-📦 Condition: Good
-🔗 https://reverb.com/item/101215603-mxr-m68-uni-vibe-effect-pedal
+[1] MXR M68 Uni-Vibe (Black)
+Price:         125.00 EUR
+Below Median:  33.29 EUR (21.0%)
+Condition:     Mint
+URL: https://reverb.com/item/...
 
+***Similar listings available on Thomann***
+[1] M68 Uni-Vibe Chorus/Vibrato
+Price: 163.90 EUR
+```
 
 ## Setup
 
@@ -52,33 +59,62 @@ New deals found: 3
 git clone https://github.com/ErnestKucher/Guitar_pedal_hunter.git
 cd Guitar_pedal_hunter
 python -m venv venv
-venv\Scripts\activate   # on Windows
+venv\Scripts\activate      # Windows
 pip install -r requirements.txt
+```
+
+Create a `.env` file (see `.env.example`):
+
+```
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_CHAT_ID=
+EBAY_PROD_CLIENT_ID=
+EBAY_PROD_CLIENT_SECRET=
+```
+
+Create the database tables once:
+
+```bash
+python -m utils.database
 ```
 
 ## Usage
 
 ```bash
-python main.py "univibe"
+python main.py "mxr uni vibe"       # CLI
+python show_seen.py                 # list saved deals
+uvicorn app:app --reload            # API, docs at /docs
+pytest tests/                       # run tests
 ```
 
-Replace `"univibe"` with any pedal name or search term.
+## Project structure
 
-## Tech stack
+```
+core/deal_finder.py     shared business logic
+scrapers/               reverb_scraper.py, ebay_scraper.py, thomann_scraper.py
+utils/                  database.py, telegram.py, helpers.py
+app.py                  FastAPI app
+main.py                 CLI entry point
+tests/                  pytest tests
+```
 
-- **Python** — core logic
-- **Requests** — HTTP calls to Reverb's GraphQL API
-- **JSON** — lightweight persistence for tracking seen deals
+## Known limitations
+
+- eBay and Thomann results are reference listings, not like-for-like matches:
+  search is by keyword, so accessories can appear (title keyword filtering
+  reduces but does not remove this)
+- eBay condition labels are in German and don't map one-to-one to Reverb's
+- Thomann shipping is a flat 9.90 EUR constant
+- Reverb uses an unofficial endpoint and may change without notice
 
 ## Roadmap
 
-- [ ] Move deal storage from JSON to a proper database (SQLite)
-- [ ] Add a FastAPI web interface for browsing deals and triggering searches
-- [ ] Price history tracking and trend analysis (pandas + charts)
-- [ ] Compare Reverb used prices against Thomann new prices
+- [ ] Docker + cloud deployment
+- [ ] Scheduled runs (Airflow)
+- [ ] Price-trend analysis notebook on `price_history`
+- [ ] Smarter product matching across marketplaces
 
 ## Disclaimer
 
-This project queries Reverb's public GraphQL endpoint for personal, 
-non-commercial, educational use. It is not affiliated with or endorsed 
-by Reverb.
+Personal, non-commercial, educational project. Not affiliated with Reverb,
+eBay or Thomann. Scraping follows each site's robots.txt, with low request rates.

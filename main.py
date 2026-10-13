@@ -1,8 +1,10 @@
 import sys
 from core.deal_finder import find_deals
+from utils.database import create_tables
 
 if __name__ == "__main__":
     query = " ".join(sys.argv[1:])
+    create_tables()
 
     if not query:
         print("Please provide a search query as a command-line argument.")

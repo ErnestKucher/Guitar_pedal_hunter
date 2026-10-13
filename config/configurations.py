@@ -24,4 +24,5 @@ EXCLUDED_TITLE_KEYWORDS = {
     "netzteil",
     "ladekabel",
     "ladegerät",
+    "cover",
 }

@@ -4,6 +4,7 @@ from scrapers.reverb_scraper import scrape_reverb, get_sold_prices, create_sessi
 import utils.database
 from utils.telegram import send_telegram_message
 from scrapers.ebay_scraper import scrape_ebay
+from scrapers.thomann_scraper import scrape_thomann
 
 
 def normalize_query(query):
@@ -29,6 +30,11 @@ def find_deals(query, session=None):
 
     results = deduplicate(results)
     sold_results = deduplicate(sold_results)
+
+    ebay_results = scrape_ebay(query).get("listings", [])
+    ebay_results = [l for l in ebay_results if l["total_price"] is not None]
+    thomann_results = scrape_thomann(query).get("listings", [])
+    thomann_results = [l for l in thomann_results if l["total_price"] is not None]
 
     for l in results:
         utils.database.save_price_history(
@@ -98,18 +104,32 @@ def find_deals(query, session=None):
     utils.database.prune_seen_deals(max_age_days=30)
 
     if new_deals:
-        message = f"🔥 New undervalued listings found for '{query}':\n\n"
+        message = f"***New undervalued listings found for '{query}' in Reverb***\n\n"
         for index, l in enumerate(new_deals[:5], start=1):
             condition_median = median_by_condition[l["condition"]]
             diff = condition_median - l["total_price"]
             percent = (diff / condition_median) * 100
             message += (
                 f"[{index}] {l['title']}\n"
-                f"💰 Price:         {l['total_price']:.2f} EUR\n"
-                f"📉 Below Median:  {diff:.2f} EUR ({percent:.1f}%)\n"
-                f"📦 Condition:     {l['condition']}\n"
-                f"🔗 {l['url']}\n\n"
+                f"Price:         {l['total_price']:.2f} EUR\n"
+                f"Below Median:  {diff:.2f} EUR ({percent:.1f}%)\n"
+                f"Condition:     {l['condition']}\n"
+                f"URL: {l['url']}\n\n"
             )
+        message += "***Similar listings available on eBay***\n"
+        for index, l in enumerate(ebay_results[:3], start=1):
+            message += (
+                f"[{index}] {l['title']}\n"
+                f"Price: {l['total_price']:.2f} EUR\n"
+                f"URL: ({l['url']})\n"
+                )
+        message += "***Similar listings available on Thomann***\n"
+        for index, l in enumerate(thomann_results[:3], start=1):
+            message += (
+                f"[{index}] {l['title']}\n"
+                f"Price: {l['total_price']:.2f} EUR\n"
+                f"URL: ({l['url']})\n"
+                )
         send_telegram_message(message)
 
     return {
