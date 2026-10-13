@@ -1,0 +1,527 @@
+query Core_Marketplace_Remixer_Search($input: MarketplaceSearchInput!, $listViewEnabled: Boolean!) {
+  marketplaceListingsSearch(input: $input) {
+    query
+    adjustedSearchUrl
+    pagination {
+      total
+      page
+      totalPages
+      hasNextPage
+      hasPreviousPage
+      nextPageUrl
+      previousPageUrl
+      __typename
+    }
+    sorts {
+      ...SearchRemixer_SortFields
+      __typename
+    }
+    facetInfo {
+      facetGroups {
+        ...SearchRemixer_FacetGroupFields
+        __typename
+      }
+      __typename
+    }
+    results {
+      score
+      __typename
+    }
+    listings {
+      _id
+      bumpKey {
+        key
+        __typename
+      }
+      ...ListingCardFields
+      ...InOtherCartsCardData
+      ...ListViewListings @include(if: $listViewEnabled)
+      __typename
+    }
+    promotionInfo {
+      promotionType
+      __typename
+    }
+    queryInfo {
+      ...SearchRemixer_QueryInfoFields
+      __typename
+    }
+    __typename
+  }
+}
+
+fragment SearchRemixer_FacetFields on SearchResultFacet {
+  all
+  key
+  count
+  displayName
+  paramValue
+  searchUrl
+  selected
+  subFacets {
+    all
+    key
+    count
+    displayName
+    paramValue
+    searchUrl
+    selected
+    subFacets {
+      all
+      key
+      count
+      displayName
+      paramValue
+      searchUrl
+      selected
+      subFacets {
+        all
+        key
+        count
+        displayName
+        paramValue
+        searchUrl
+        selected
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+  __typename
+}
+
+fragment ListingForBuyerShippingFields on Listing {
+  _id
+  shipping {
+    freeExpeditedShipping
+    localPickupOnly
+    shippingPrices {
+      _id
+      shippingMethod
+      carrierCalculated
+      regional
+      destinationPostalCodeNeeded
+      postalCode
+      rate {
+        amount
+        amountCents
+        currency
+        display
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+  __typename
+}
+
+fragment ListingGreatValueData on Listing {
+  _id
+  pricing {
+    buyerPrice {
+      currency
+      amountCents
+      __typename
+    }
+    typicalNewPriceDisplay {
+      amountDisplay
+      __typename
+    }
+    __typename
+  }
+  condition {
+    conditionSlug
+    __typename
+  }
+  priceRecommendation {
+    priceMiddle {
+      amountCents
+      currency
+      __typename
+    }
+    __typename
+  }
+  shop {
+    _id
+    address {
+      _id
+      country {
+        _id
+        countryCode
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+  currency
+  __typename
+}
+
+fragment ListingCardCPOData on Listing {
+  _id
+  id
+  certifiedPreOwned {
+    title
+    badgeIconUrl
+    __typename
+  }
+  __typename
+}
+
+fragment ListingForBuyerFields on Listing {
+  _id
+  id
+  title
+  slug
+  listingType
+  make
+  model
+  upc
+  state
+  stateDescription
+  bumped
+  watching
+  soldAsIs
+  usOutlet
+  publishedAt {
+    seconds
+    __typename
+  }
+  condition {
+    displayName
+    conditionSlug
+    conditionUuid
+    __typename
+  }
+  pricing {
+    buyerPrice {
+      display
+      currency
+      amount
+      amountCents
+      __typename
+    }
+    originalPrice {
+      display
+      __typename
+    }
+    ribbon {
+      display
+      reason
+      __typename
+    }
+    __typename
+  }
+  images(
+    input: {transform: "card_square", count: 3, scope: "photos", type: "Product"}
+  ) {
+    source
+    __typename
+  }
+  shipping {
+    shippingPrices {
+      _id
+      shippingMethod
+      carrierCalculated
+      destinationPostalCodeNeeded
+      rate {
+        amount
+        amountCents
+        currency
+        display
+        __typename
+      }
+      __typename
+    }
+    freeExpeditedShipping
+    localPickupOnly
+    localPickup
+    __typename
+  }
+  shop {
+    _id
+    name
+    returnPolicy {
+      usedReturnWindowDays
+      newReturnWindowDays
+      __typename
+    }
+    address {
+      _id
+      locality
+      region
+      country {
+        _id
+        countryCode
+        name
+        __typename
+      }
+      displayLocation
+      __typename
+    }
+    __typename
+  }
+  ...ListingForBuyerShippingFields
+  ...ListingGreatValueData
+  ...ListingCardCPOData
+  __typename
+}
+
+fragment WatchBadgeData on Listing {
+  _id
+  id
+  title
+  sellerId
+  watching
+  __typename
+}
+
+fragment mParticleListingFields on Listing {
+  id
+  _id
+  title
+  brandSlug
+  categoryRootUuid
+  make
+  categoryUuids
+  state
+  listingType
+  bumpEligible
+  shopId
+  inventory
+  soldAsIs
+  acceptedPaymentMethods
+  currency
+  usOutlet
+  condition {
+    conditionUuid
+    conditionSlug
+    __typename
+  }
+  categories {
+    _id
+    slug
+    rootSlug
+    __typename
+  }
+  csp {
+    _id
+    id
+    slug
+    brand {
+      _id
+      slug
+      __typename
+    }
+    __typename
+  }
+  pricing {
+    buyerPrice {
+      amount
+      currency
+      amountCents
+      __typename
+    }
+    __typename
+  }
+  publishedAt {
+    seconds
+    __typename
+  }
+  sale {
+    _id
+    id
+    code
+    buyerIneligibilityReason
+    __typename
+  }
+  shipping {
+    shippingPrices {
+      _id
+      shippingMethod
+      carrierCalculated
+      destinationPostalCodeNeeded
+      rate {
+        amount
+        amountCents
+        currency
+        display
+        __typename
+      }
+      __typename
+    }
+    freeExpeditedShipping
+    localPickupOnly
+    localPickup
+    __typename
+  }
+  certifiedPreOwned {
+    title
+    badgeIconUrl
+    __typename
+  }
+  shop {
+    _id
+    address {
+      _id
+      countryCode
+      __typename
+    }
+    returnPolicy {
+      _id
+      newReturnWindowDays
+      usedReturnWindowDays
+      __typename
+    }
+    __typename
+  }
+  __typename
+}
+
+fragment ListingCreateOfferButtonData on Listing {
+  id
+  _id
+  state
+  offersEnabled
+  listingType
+  sellerId
+  isBuyerOfferEligible
+  ...mParticleListingFields
+  __typename
+}
+
+fragment AddToCartButtonFields on Listing {
+  _id
+  id
+  sellerId
+  listingType
+  pricing {
+    buyerPrice {
+      amount
+      amountCents
+      currency
+      __typename
+    }
+    __typename
+  }
+  preorderInfo {
+    onPreorder
+    estimatedShipDate {
+      seconds
+      __typename
+    }
+    __typename
+  }
+  __typename
+}
+
+fragment ListingCardFields on Listing {
+  _id
+  ...ListingForBuyerFields
+  ...WatchBadgeData
+  ...ListingCreateOfferButtonData
+  __typename
+}
+
+fragment InOtherCartsCardData on Listing {
+  _id
+  id
+  otherBuyersWithListingInCartCounts
+  __typename
+}
+
+fragment SearchRemixer_SortFields on Sorts {
+  displayText
+  key
+  sortOptions {
+    displayName
+    slug
+    key
+    selected
+    searchUrl
+    __typename
+  }
+  widgetType
+  __typename
+}
+
+fragment SearchRemixer_FacetGroupFields on SearchResultFacetGroup {
+  displayName
+  key
+  featured
+  label
+  widgetType
+  facets {
+    ...SearchRemixer_FacetFields
+    __typename
+  }
+  __typename
+}
+
+fragment ListViewListings on Listing {
+  _id
+  id
+  categoryUuids
+  state
+  shop {
+    _id
+    name
+    slug
+    preferredSeller
+    quickShipper
+    quickResponder
+    address {
+      _id
+      locality
+      region
+      displayLocation
+      country {
+        _id
+        countryCode
+        name
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+  seller {
+    _id
+    feedbackSummary {
+      receivedCount
+      rollingRatingPercentage
+      __typename
+    }
+    __typename
+  }
+  csp {
+    _id
+    webLink {
+      href
+      __typename
+    }
+    __typename
+  }
+  ...AddToCartButtonFields
+  ...ListingCardFields
+  ...ListingCreateOfferButtonData
+  ...InOtherCartsCardData
+  __typename
+}
+
+fragment SearchRemixer_QueryInfoFields on SearchQueryInfo {
+  originalQuery
+  executedQuery
+  rewritten
+  showOriginalQueryLink
+  spellCorrected
+  displayInfo {
+    rewriteStrategy
+    displayMessage
+    __typename
+  }
+  __typename
+}

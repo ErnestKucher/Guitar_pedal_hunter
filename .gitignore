@@ -5,6 +5,5 @@ venv/
 .idea/
 .vscode/
 *.log
-config/*.graphql
 data/seen.json
 data/pedal_hunter.db

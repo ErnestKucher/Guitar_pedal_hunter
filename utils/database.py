@@ -5,6 +5,7 @@ from datetime import date, timedelta
 DB_FILE = Path("data/pedal_hunter.db")
 
 def get_connection():
+    DB_FILE.parent.mkdir(parents=True, exist_ok=True)
     return sqlite3.connect(DB_FILE)
 
 def create_tables():

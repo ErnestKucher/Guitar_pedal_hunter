@@ -1,0 +1,27 @@
+query MarketplaceListingsSearch($input: MarketplaceSearchInput!) {
+  marketplaceListingsSearch(input: $input) {
+    listings {
+      _id
+      title
+      condition {
+        displayName
+      }
+      slug
+      pricing {
+        buyerPrice {
+          amount
+        }
+      }
+      shipping {
+        shippingPrices {
+          rate {
+            amount
+          }
+        }
+      }
+    }
+    pagination {
+      total
+    }
+  }
+}
