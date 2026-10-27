@@ -25,7 +25,11 @@ against each other), and flags active listings priced below that median.
 - Telegram bot notifications
 - FastAPI endpoints (`/`, `/deals`, `/search?query=...`)
 - Shared business logic in `core/deal_finder.py`, used by both CLI and API
-- pytest suite (15 tests)
+- price_history: one sentence saying it stores Reverb (active and sold) and Thomann (active) prices, each sold listing once and each activE 
+  listing once per day
+- Known Limitations: eBay is shown only as reference listings and isn’t stored, because its keyword search is too noisy for trend data. That is
+  a deliberate decision of yours, so say so.
+- pytest suite (16 tests)
 
 ## How it works
 
