@@ -32,9 +32,19 @@ def find_deals(query, session=None):
     results = deduplicate(results)
     sold_results = deduplicate(sold_results)
 
-    ebay_results = scrape_ebay(query).get("listings", [])
+    try:
+        ebay_results = scrape_ebay(query).get("listings", [])
+    except Exception as e:
+        print(f"[WARN] eBay lookup failed: {e}")
+        ebay_results = []
+    
     ebay_results = [l for l in ebay_results if l["total_price"] is not None and matches_query(l["title"], query)]
-    thomann_results = scrape_thomann(query).get("listings", [])
+    
+    try:
+        thomann_results = scrape_thomann(query).get("listings", [])
+    except Exception as e:
+        print(f"[WARN] Thomann lookup failed: {e}")
+        thomann_results = []
     thomann_results = [l for l in thomann_results if l["total_price"] is not None and matches_query(l["title"], query)]
 
     for l in results:
@@ -45,7 +55,8 @@ def find_deals(query, session=None):
             listing_price=l["total_price"],
             listing_condition=l["condition"],
             listing_url=l["url"],
-            listing_type="active"
+            listing_type="active",
+            source="reverb"
         )
 
     for l in sold_results:
@@ -56,7 +67,20 @@ def find_deals(query, session=None):
             listing_price=l["total_price"],
             listing_condition=l["condition"],
             listing_url=l["url"],
-            listing_type="sold"
+            listing_type="sold",
+            source="reverb"
+        )
+
+    for l in thomann_results:
+        utils.database.save_price_history(
+            search_query=query,
+            listing_id=l["id"],
+            listing_title=l["title"],
+            listing_price=l["total_price"],
+            listing_condition=l.get("condition"),
+            listing_url=l["url"],
+            listing_type="active",
+            source="thomann"
         )
 
     sold_by_condition = {}

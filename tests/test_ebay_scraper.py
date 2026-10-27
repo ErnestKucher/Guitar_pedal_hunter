@@ -52,3 +52,13 @@ def test_parse_ebay_item_strips_tracking_from_url():
     }
     result = parse_ebay_item(item)
     assert result["url"] == "https://www.ebay.de/itm/123"
+
+def test_parse_ebay_item_missing_title_becomes_empty_string():
+    item = {
+        "itemId": "v1|123|0",
+        "price": {"value": "150.00", "currency": "EUR"},
+        "shippingOptions": [{"shippingCost": {"value": "10.00", "currency": "EUR"}}],
+        "itemWebUrl": "https://www.ebay.de/itm/123"
+    }
+    result = parse_ebay_item(item)
+    assert result["title"] == ""

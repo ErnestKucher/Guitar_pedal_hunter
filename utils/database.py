@@ -32,8 +32,21 @@ def create_tables():
                 listing_condition TEXT,
                 listing_url TEXT,
                 listing_type TEXT,
-                scraped_at TEXT
+                scraped_at TEXT,
+                source TEXT
             )
+        """)
+
+        cursor.execute("""
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_sold_once
+            ON price_history (search_query, listing_id, source)
+            WHERE listing_type = 'sold'
+        """)
+
+        cursor.execute("""
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_active_daily
+            ON price_history (search_query, listing_id, scraped_at, source)
+            WHERE listing_type = 'active'
         """)
 
 def load_seen():
@@ -61,14 +74,14 @@ def prune_seen_deals(max_age_days=30):
         cursor = conn.cursor()
         cursor.execute("DELETE FROM seen_deals WHERE found_at < ?", (cutoff_date.isoformat(),))
 
-def save_price_history(search_query, listing_id, listing_title, listing_price, listing_condition, listing_url, listing_type):
+def save_price_history(search_query, listing_id, listing_title, listing_price, listing_condition, listing_url, listing_type, source):
     scraped_at = date.today().isoformat()
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO price_history (search_query, listing_id, listing_title, listing_price, listing_condition, listing_url, listing_type, scraped_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (search_query, listing_id, listing_title, listing_price, listing_condition, listing_url, listing_type, scraped_at))
+            INSERT OR IGNORE INTO price_history (search_query, listing_id, listing_title, listing_price, listing_condition, listing_url, listing_type, scraped_at, source)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (search_query, listing_id, listing_title, listing_price, listing_condition, listing_url, listing_type, scraped_at, source))
 
 if __name__ == "__main__":
     create_tables()

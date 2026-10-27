@@ -24,7 +24,7 @@ def get_ebay_token():
         "scope": "https://api.ebay.com/oauth/api_scope"
     }
     
-    response = requests.post(url, headers=headers, data=body)
+    response = requests.post(url, headers=headers, data=body, timeout=10)
     return response
 
 def search_ebay(query, access_token):
@@ -36,7 +36,7 @@ def search_ebay(query, access_token):
     params = {
         "q": f' "{query}"'
     }
-    response = requests.get(url, headers=headers, params=params)
+    response = requests.get(url, headers=headers, params=params, timeout=10)
     return response
 
 def parse_ebay_item(item):
@@ -46,7 +46,7 @@ def parse_ebay_item(item):
 
     return {
         "id": item.get("itemId"),
-        "title": item.get("title"),
+        "title": item.get("title") or "",
         "condition": item.get("condition"),
         "price": price,
         "shipping": shipping_cost,
